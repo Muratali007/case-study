@@ -17,8 +17,10 @@ jobs:
           java-version: '17'
       - name: Build Project
         run: mvn clean install -DskipTests
-      - name: Login to docker hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Log in to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" \
+            | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin
       - name: Build docker image
         run: docker build -t muratali007/kitaphub-backend .
       - name: Publish image to docker hub
