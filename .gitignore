@@ -1,0 +1,10 @@
+/*
+!/src/
+!/.dockerignore
+!/.gitignore
+!/docker-compose.yml
+!/Dockerfile
+!/pom.xml
+!/README.md
+!/checkstyle-suppressions.xml
+!/.github/

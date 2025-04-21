@@ -1,0 +1,43 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16
+    container_name: kitaphub-db
+    environment:
+      POSTGRES_DB: kitaphub
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    volumes:
+      - ./postgres/kitaphub:/var/lib/postgresql/data
+    ports:
+      - "9090:5432"
+  postgres-keycloak:
+    image: postgres:16
+    container_name: keycloak-db
+    environment:
+      POSTGRES_DB: pdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - ./postgres/keycloak:/var/lib/postgresql/data
+    ports:
+      - "9092:5432"
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.3
+    container_name: kitaphub-keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_URL_DATABASE: pdb
+      KC_DB_USERNAME: admin
+      KC_DB_PASSWORD: admin
+#      KC_HOSTNAME: localhost
+#      KC_HTTP_RELATIVE_PATH: /auth
+    ports:
+      - "9091:8080"
+    depends_on:
+      - postgres-keycloak
+    command:
+      - start-dev
