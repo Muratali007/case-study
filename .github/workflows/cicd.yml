@@ -22,17 +22,17 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" \
             | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin
       - name: Build docker image
-        run: docker build -t muratali007/kitaphub-backend .
+        run: docker build -t muratali/kitaphub-backend .
       - name: Publish image to docker hub
-        run: docker push muratali007/kitaphub-backend:latest
+        run: docker push muratali/kitaphub-backend:latest
 
   deploy:
     needs: build
     runs-on: [self-hosted]
     steps:
       - name: Pull Image from docker hub
-        run: sudo docker pull muratali007/kitaphub-backend:latest
+        run: sudo docker pull muratali/kitaphub-backend:latest
       - name: Delete old container
         run: sudo docker rm -f springboot-container
       - name: Run docker container
-        run: sudo docker run -d -p 8080:8080 --name springboot-container muratali007/kitaphub-backend
+        run: sudo docker run -d -p 8080:8080 --name springboot-container muratali/kitaphub-backend
