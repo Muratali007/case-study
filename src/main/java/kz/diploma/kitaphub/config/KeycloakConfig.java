@@ -11,7 +11,7 @@ public class KeycloakConfig {
   @Bean
   Keycloak keycloak() {
     return KeycloakBuilder.builder()
-        .serverUrl("http://16.171.71.10:8080")
+        .serverUrl("http://13.61.181.197:8080")
         .realm("master")
         .clientId("admin-cli")
         .grantType(OAuth2Constants.PASSWORD)
