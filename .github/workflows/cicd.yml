@@ -42,5 +42,5 @@ jobs:
         run: |
           aws ecs update-service \
             --cluster kitaphubCluster \
-            --service kitaphub-backend-task-service-y7dxk6tx \
+            --service kitaphub-backend-task-service-w4mubxls \
             --force-new-deployment
