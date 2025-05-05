@@ -55,28 +55,46 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Start your app container
+      - name: Start OWASP Juice Shop
         run: |
-          docker run -d -p 8080:8080 --name kitaphub muratali/kitaphub-backend:latest
-          # Wait for app to be ready (no authentication needed)
-          docker run --network container:kitaphub curlimages/curl \
-            --retry 12 --retry-delay 5 \
-            --connect-timeout 5 --max-time 10 \
-            http://localhost:8080/hello || true
-          sleep 3
+          docker run -d -p 8080:3000 --name juiceshop bkimminich/juice-shop
+          echo "Waiting for Juice Shop to initialize..."
+          docker run --network container:juiceshop curlimages/curl \
+            --retry 15 --retry-delay 5 --retry-all-errors \
+            --connect-timeout 10 --max-time 20 \
+            http://localhost:3000 || true
+          sleep 5
+          echo "Juice Shop container status:"
+          docker ps -f name=juiceshop --format "{{.Status}}"
 
-      - name: Run OWASP ZAP Baseline Scan
+      # Run ZAP security scan
+      - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.9.0
         with:
-          target: 'http://localhost:8080/hello'
-          cmd_options: '-r report_html.html -j report.json'
-          # No authentication parameters needed
+          target: 'http://localhost:8080'
+          cmd_options: >-
+            -r report_html.html 
+            -w report_md.md 
+            -J report_json.json
+            --hook=zap-hook.py
+            -z "-config scanner.attackStrength=HIGH"
+          fail_action: false
+          allow_issue_writing: false
 
-      - name: Upload ZAP Report
+      # Process and upload results
+      - name: Upload Scan Reports
         uses: actions/upload-artifact@v4
         with:
-          name: zap-report-${{ github.run_number }}
+          name: security-reports-${{ github.run_number }}
           path: |
             report_html.html
-            report.json
-          retention-days: 3
+            report_md.md
+            report_json.json
+          retention-days: 7
+
+      # Optional: Fail workflow if critical issues found
+      - name: Check for Critical Vulnerabilities
+        if: contains(steps.zap.outputs.summary, 'FAIL-NEW')
+        run: |
+          echo "Critical vulnerabilities detected!" >&2
+          exit 1
