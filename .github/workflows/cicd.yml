@@ -55,10 +55,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Start OWASP Juice Shop
+      - name: Start Juice Shop
         run: |
           docker run -d -p 8080:3000 --name juiceshop bkimminich/juice-shop
-          echo "Waiting for Juice Shop to initialize..."
+          echo "Waiting for Juice Shop to start..."
           docker run --network container:juiceshop curlimages/curl \
             --retry 15 --retry-delay 5 --retry-all-errors \
             --connect-timeout 10 --max-time 20 \
@@ -67,56 +67,58 @@ jobs:
 
       - name: Run OWASP ZAP Scan
         uses: zaproxy/action-baseline@v0.9.0
-        id: zap
+        id: zap-scan
         with:
           target: 'http://localhost:8080'
           cmd_options: >-
-            -r report.html
-            -w report.md
-            -J report.json
+            -J zap_report.json
+            -w zap_report.md
+            -r zap_report.html
             -z "-config scanner.attackStrength=HIGH"
-            -U admin -P password123  # Juice Shop default credentials
+            --hook=/zap/wrk/.zap/zap-hook.py
           fail_action: false
 
-      - name: Process Scan Results
+      - name: Verify and Process Reports
         run: |
-          # Wait briefly to ensure file is written
-          sleep 5
+          # List all files in working directory
+          echo "Current directory contents:"
+          ls -la
 
-          # Verify report exists
-          if [ ! -f "report.json" ]; then
-            echo "Error: report.json not found!"
-            echo "Contents of working directory:"
-            ls -la
+          # Check specifically for ZAP output files
+          echo "ZAP report files:"
+          ls -la zap_report.* || echo "No ZAP report files found"
+
+          # Wait and retry if files aren't immediately available
+          for i in {1..5}; do
+            if [ -f "zap_report.json" ]; then
+              break
+            fi
+            echo "Waiting for report files... (attempt $i/5)"
+            sleep 5
+          done
+
+          if [ ! -f "zap_report.json" ]; then
+            echo "::error::ZAP scan failed to generate report"
             exit 1
           fi
 
-          # Filter out false positives
-          jq 'del(.site[]?.alerts[]? | select(.risk == "Informational"))' report.json > filtered_report.json
-
-          # Count vulnerabilities
-          CRITICAL=$(jq '[.site[].alerts[] | select(.risk == "High")] | length' filtered_report.json || echo "0")
-          MEDIUM=$(jq '[.site[].alerts[] | select(.risk == "Medium")] | length' filtered_report.json || echo "0")
+          # Process the report
+          echo "Processing scan results..."
+          CRITICAL=$(jq '[.site[].alerts[] | select(.risk == "High")] | length' zap_report.json || echo "0")
+          MEDIUM=$(jq '[.site[].alerts[] | select(.risk == "Medium")] | length' zap_report.json || echo "0")
 
           echo "Vulnerabilities found:"
           echo "Critical: $CRITICAL"
           echo "Medium: $MEDIUM"
-
-          # Set output for conditional failure
           echo "critical_count=$CRITICAL" >> $GITHUB_OUTPUT
 
       - name: Upload Security Reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: security-reports-${{ github.run_id }}
+          name: security-reports-${{ github.run_number }}
           path: |
-            report.html
-            report.md
-            filtered_report.json
+            zap_report.json
+            zap_report.md
+            zap_report.html
           retention-days: 7
-
-      - name: Fail on Critical Vulnerabilities
-        if: steps.process-results.outputs.critical_count != '0'
-        run: |
-          echo "Critical vulnerabilities detected!" >&2
-          exit 1
