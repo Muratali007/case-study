@@ -80,12 +80,30 @@ jobs:
 
       - name: Process Scan Results
         run: |
+          # Wait briefly to ensure file is written
+          sleep 5
+
+          # Verify report exists
+          if [ ! -f "report.json" ]; then
+            echo "Error: report.json not found!"
+            echo "Contents of working directory:"
+            ls -la
+            exit 1
+          fi
+
           # Filter out false positives
           jq 'del(.site[]?.alerts[]? | select(.risk == "Informational"))' report.json > filtered_report.json
-          
-          # Count remaining vulnerabilities
-          CRITICAL=$(jq '[.site[].alerts[] | select(.risk == "High")] | length' filtered_report.json)
-          echo "Critical vulnerabilities found: $CRITICAL"
+
+          # Count vulnerabilities
+          CRITICAL=$(jq '[.site[].alerts[] | select(.risk == "High")] | length' filtered_report.json || echo "0")
+          MEDIUM=$(jq '[.site[].alerts[] | select(.risk == "Medium")] | length' filtered_report.json || echo "0")
+
+          echo "Vulnerabilities found:"
+          echo "Critical: $CRITICAL"
+          echo "Medium: $MEDIUM"
+
+          # Set output for conditional failure
+          echo "critical_count=$CRITICAL" >> $GITHUB_OUTPUT
 
       - name: Upload Security Reports
         uses: actions/upload-artifact@v4
