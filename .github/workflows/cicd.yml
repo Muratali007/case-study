@@ -64,37 +64,41 @@ jobs:
             --connect-timeout 10 --max-time 20 \
             http://localhost:3000 || true
           sleep 5
-          echo "Juice Shop container status:"
-          docker ps -f name=juiceshop --format "{{.Status}}"
 
-      # Run ZAP security scan
-      - name: OWASP ZAP Baseline Scan
+      - name: Run OWASP ZAP Scan
         uses: zaproxy/action-baseline@v0.9.0
+        id: zap
         with:
           target: 'http://localhost:8080'
           cmd_options: >-
-            -r report_html.html 
-            -w report_md.md 
-            -J report_json.json
-            --hook=zap-hook.py
+            -r report.html
+            -w report.md
+            -J report.json
             -z "-config scanner.attackStrength=HIGH"
+            -U admin -P password123  # Juice Shop default credentials
           fail_action: false
-          allow_issue_writing: false
 
-      # Process and upload results
-      - name: Upload Scan Reports
+      - name: Process Scan Results
+        run: |
+          # Filter out false positives
+          jq 'del(.site[]?.alerts[]? | select(.risk == "Informational"))' report.json > filtered_report.json
+          
+          # Count remaining vulnerabilities
+          CRITICAL=$(jq '[.site[].alerts[] | select(.risk == "High")] | length' filtered_report.json)
+          echo "Critical vulnerabilities found: $CRITICAL"
+
+      - name: Upload Security Reports
         uses: actions/upload-artifact@v4
         with:
-          name: security-reports-${{ github.run_number }}
+          name: security-reports-${{ github.run_id }}
           path: |
-            report_html.html
-            report_md.md
-            report_json.json
+            report.html
+            report.md
+            filtered_report.json
           retention-days: 7
 
-      # Optional: Fail workflow if critical issues found
-      - name: Check for Critical Vulnerabilities
-        if: contains(steps.zap.outputs.summary, 'FAIL-NEW')
+      - name: Fail on Critical Vulnerabilities
+        if: steps.process-results.outputs.critical_count != '0'
         run: |
           echo "Critical vulnerabilities detected!" >&2
           exit 1
