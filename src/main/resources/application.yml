@@ -2,7 +2,7 @@ spring:
   jpa:
     database: postgresql
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     show-sql: true
   datasource:
     url: jdbc:postgresql://ep-soft-limit-a2t2akkp-pooler.eu-central-1.aws.neon.tech/kitaphub?sslmode=require
