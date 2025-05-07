@@ -28,13 +28,13 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: realms/kitaphub
-          jwk-set-uri: http://localhost:9091/realms/kitaphub/protocol/openid-connect/certs
+          jwk-set-uri: http://13.53.171.71:9091/realms/kitaphub/protocol/openid-connect/certs
 logging:
   file:
     name: logs/kitaphub.log
 
 keycloak:
-  url: http://localhost:9091
+  url: http://13.53.171.71:9091
   realm: kitaphub
   client-id: kitaphub-backend
   username: admin
