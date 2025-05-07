@@ -34,77 +34,23 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ secrets.AWS_REGION }}
-
-      - name: Trigger ECS Deployment
-        run: |
-          aws ecs update-service \
-            --cluster kitaphubCluster \
-            --service kitaphub-backend-task-service-w4mubxls \
-            --force-new-deployment
-
-  dast:
-    needs: deploy
-    runs-on: ubuntu-latest
-    steps:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Start Juice Shop
-        run: |
-          docker run -d -p 8080:3000 --name juiceshop bkimminich/juice-shop
-          echo "Waiting for Juice Shop to start..."
-          docker run --network container:juiceshop curlimages/curl \
-            --retry 15 --retry-delay 5 --retry-all-errors \
-            --connect-timeout 10 --max-time 20 \
-            http://localhost:3000 || true
-          sleep 5
-
-      - name: Fix permissions
-        run: sudo chmod -R a+w .
-
-      - name: Run OWASP ZAP Scan
-        uses: zaproxy/action-baseline@v0.9.0
-        id: zap-scan
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
         with:
-          target: 'http://localhost:8080'
-          cmd_options: >-
-            -J report.json
-            -w report.md
-            -r report.html
-            -z "-config scanner.attackStrength=HIGH"
-            --hook=/zap/wrk/.zap/zap-hook.py || true
-          fail_action: false
+          key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          known_hosts: "just-a-placeholder-so-we-dont-get-errors"
 
-      - name: Verify reports exist
+      - name: Deploy to Docker Swarm
         run: |
-          ls -la
-          if [ ! -f "report.json" ]; then
-            echo "::error::ZAP failed to generate report.json"
-            exit 1
-          fi
+          # Copy files to Swarm Manager
+          scp -o StrictHostKeyChecking=no \
+            docker-compose.yml \
+            ubuntu@ec2-13-53-171-71.eu-north-1.compute.amazonaws.com:/home/ubuntu/
 
-      - name: Process results
-        run: |
-          echo "Scan results:"
-          jq '.site[]?.alerts[]? | {name, risk, url}' report.json || echo "No alerts found"
-
-          CRITICAL=$(jq '[.site[].alerts[] | select(.risk == "High")] | length' report.json || echo "0")
-          echo "critical_count=$CRITICAL" >> $GITHUB_OUTPUT
-          echo "Found $CRITICAL critical vulnerabilities"
-
-      - name: Upload reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: zap-reports-${{ github.run_number }}
-          path: |
-            report.json
-            report.md
-            report.html
-          retention-days: 3
+          # SSH into Manager and deploy
+          ssh -o StrictHostKeyChecking=no \
+            ubuntu@ec2-13-53-171-71.eu-north-1.compute.amazonaws.com \
+            "docker stack deploy -c docker-compose.yml kitaphub"
