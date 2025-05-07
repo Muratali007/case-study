@@ -35,7 +35,7 @@ services:
       - pg-data:/var/lib/postgresql/data
 
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0.3
+    image: quay.io/keycloak/keycloak:23.0.5
     command: start-dev  # Ensure it starts properly
     deploy:
       placement:
