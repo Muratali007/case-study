@@ -51,6 +51,7 @@ services:
       KC_DB_URL_DATABASE: pdb
       KC_DB_USERNAME: admin
       KC_DB_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
     ports:
       - "9091:8080"
     depends_on:
