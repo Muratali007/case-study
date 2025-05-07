@@ -7,7 +7,9 @@ services:
       replicas: 1
       placement:
         constraints:
-          - node.hostname == backend-node
+          - node.hostname == ip-172-31-11-162  # Backend on backend-node
+      restart_policy:
+        condition: on-failure
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/kitaphub
       - SPRING_DATASOURCE_USERNAME=postgres
@@ -22,7 +24,9 @@ services:
     deploy:
       placement:
         constraints:
-          - node.hostname == backend-node
+          - node.hostname == ip-172-31-11-162  # Backend node
+      restart_policy:
+        condition: on-failure
     environment:
       POSTGRES_DB: kitaphub
       POSTGRES_USER: postgres
@@ -32,29 +36,41 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.3
+    command: start-dev  # Ensure it starts properly
     deploy:
       placement:
         constraints:
-          - node.hostname == frontend-node
+          - node.hostname == ip-172-31-10-72  # Frontend node
+      restart_policy:
+        condition: on-failure
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_DB: postgres
       KC_DB_URL_HOST: postgres-keycloak
       KC_DB_URL_DATABASE: pdb
+      KC_DB_USERNAME: admin
+      KC_DB_PASSWORD: admin
     ports:
       - "9091:8080"
+    depends_on:
+      - postgres-keycloak
 
   postgres-keycloak:
     image: postgres:16
     deploy:
       placement:
         constraints:
-          - node.hostname == frontend-node
+          - node.hostname == ip-172-31-10-72  # Frontend node
+      restart_policy:
+        condition: on-failure
     environment:
       POSTGRES_DB: pdb
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
+    volumes:
+      - keycloak-pgdata:/var/lib/postgresql/data
 
 volumes:
   pg-data:
+  keycloak-pgdata:
