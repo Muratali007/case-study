@@ -2,29 +2,15 @@ spring:
   jpa:
     database: postgresql
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
+    show-sql: true
   datasource:
-    #    url: jdbc:postgresql://localhost:9090/kitaphub
     url: jdbc:postgresql://ep-soft-limit-a2t2akkp-pooler.eu-central-1.aws.neon.tech/kitaphub?sslmode=require
-    #    url: jdbc:postgresql://ep-soft-limit-a2t2akkp.eu-central-1.aws.neon.tech/kitaphub?sslmode=require
     username: kitaphub_owner
     password: oxFAO2lU8CJg
     driver-class-name: org.postgresql.Driver
   security:
     oauth2:
-      #      client:
-      #        registration:
-      #           keycloak:
-      #             provider: kitaphub
-      #             client-id: kitaphub-backend
-      #             authorization-grant-type: authorization_code
-      #             scope:
-      #               - openid
-      #               - profile
-      #        provider:
-      #          keycloak:
-      #            issuer-uri: http://localhost:9091/realms/kitaphub
-      #            user-name-attribute: preferred_username
       resourceserver:
         jwt:
           issuer-uri: realms/kitaphub
