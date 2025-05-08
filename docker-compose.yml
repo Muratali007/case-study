@@ -11,9 +11,9 @@ services:
       restart_policy:
         condition: on-failure
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/kitaphub
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=1234
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ep-soft-limit-a2t2akkp-pooler.eu-central-1.aws.neon.tech/kitaphub?sslmode=require
+      - SPRING_DATASOURCE_USERNAME=kitaphub_owner
+      - SPRING_DATASOURCE_PASSWORD=oxFAO2lU8CJg
     ports:
       - "8080:8080"
     depends_on:
