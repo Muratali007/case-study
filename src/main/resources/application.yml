@@ -5,8 +5,8 @@ spring:
       ddl-auto: none
   datasource:
     url: jdbc:postgresql://ep-soft-limit-a2t2akkp-pooler.eu-central-1.aws.neon.tech/kitaphub?sslmode=require
-    username: kitaphub_owner
-    password: oxFAO2lU8CJg
+    username: 'kitaphub_owner'
+    password: 'oxFAO2lU8CJg'
     driver-class-name: org.postgresql.Driver
   security:
     oauth2:
