@@ -47,11 +47,12 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_DB: postgres
-      KC_DB_URL_HOST: postgres-keycloak
-      KC_DB_URL_DATABASE: pdb
-      KC_DB_USERNAME: admin
-      KC_DB_PASSWORD: admin
+      KC_DB_URL: jdbc:postgresql://ep-soft-limit-a2t2akkp-pooler.eu-central-1.aws.neon.tech/kitaphub?sslmode=require
+      KC_DB_USERNAME: kitaphub_owner
+      KC_DB_PASSWORD: oxFAO2lU8CJg
       KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY: edge
     ports:
       - "9091:8080"
     depends_on:
