@@ -62,8 +62,8 @@ public class UserController {
   @PostMapping
   public ResponseEntity<Long> addUserToDb(@RequestBody AddUserRequest request,
                                           Authentication authentication) {
-    String userId = "fa4ef3c9-3459-4d4e-a11b-d373975df5da";
-//    var keycloakUser = keycloakService.updateAddedToDb(userId);
+    String userId = ((Jwt) authentication.getPrincipal()).getSubject();
+    var keycloakUser = keycloakService.updateAddedToDb(userId);
 
     SocialLink socialLink = new SocialLink();
     socialLink.setInstagramLink(request.getInstagram());
@@ -72,10 +72,10 @@ public class UserController {
 
 
     User user = new User();
-//    user.setUsername(keycloakUser.getUsername());
-//    user.setName(keycloakUser.getFirstName());
-//    user.setSurname(keycloakUser.getLastName());
-//    user.setEmail(keycloakUser.getEmail());
+    user.setUsername(keycloakUser.getUsername());
+    user.setName(keycloakUser.getFirstName());
+    user.setSurname(keycloakUser.getLastName());
+    user.setEmail(keycloakUser.getEmail());
     user.setPhone(request.getPhone());
     user.setSocialLink(social);
     var createdUser = userService.save(user);
