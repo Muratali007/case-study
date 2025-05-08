@@ -40,8 +40,8 @@ public class UserBookController {
 
   @GetMapping
   public List<UserBookDto> getUserBooks() {
-//    String username = JwtUtils.getUsername();
-    return userBookService.getUserBooks("mura");
+    String username = JwtUtils.getUsername();
+    return userBookService.getUserBooks(username);
   }
 
   @GetMapping("/user/{isbn}")
@@ -56,8 +56,8 @@ public class UserBookController {
 
   @PostMapping
   public ResponseEntity<Long> addUserBooks(@RequestBody AddUserBookRequest request) {
-//    String username = JwtUtils.getUsername();
-    var user = userService.getUserByUsername("muramura").orElseThrow();
+    String username = JwtUtils.getUsername();
+    var user = userService.getUserByUsername(username).orElseThrow();
     var book = bookService.getBookByIsbn(request.getIsbn()).orElseThrow();
     if (!userBookService.checkBookIfExist(user, book)) {
       var userBook = new UserBook();

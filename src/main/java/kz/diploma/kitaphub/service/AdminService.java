@@ -107,7 +107,7 @@ public class AdminService {
     var bookLink = bookLinkRepository.save(book.getBookLink());
     var author = authorRepository.findById(book.getAuthor().getId()).orElseThrow();
     book.setAuthor(author);
-//    book.setBookLink(bookLink);
+    book.setBookLink(bookLink);
     return bookRepository.save(book);
   }
 
